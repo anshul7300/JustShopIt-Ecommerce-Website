@@ -1,0 +1,107 @@
+{% extends 'shop/basic.html' %}
+{% block title %} Tracker {% endblock %}
+{% block body %} 
+ <div class="container my-3">
+    <div class="col my-3">
+    <h3> JustShopIt.com Tracker - Enter your orderid and email address to track your order</h3>
+      <form method="POST" action="#" id="trackerForm">
+        
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="inputname">OrderId</label>
+                <input type="text" class="form-control" id="orderid" name="orderid" placeholder="OrderId">
+            </div>
+            <div class="form-group col-md-6">
+              <label for="inputEmail4">Email</label>
+              <input type="email" class="form-control" id="email" name="email" placeholder="Email">
+            </div> 
+        </div>
+        <button type="submit" class="btn btn-primary">Track Order</button>
+      </form>
+    </div>
+    <div class='col my-4'>
+      <h3>Your Order Status:</h3>
+      <div class="my-4" >
+         <ul class="list-group" id="items">  
+            Enter your order Id and Email to track your Order!
+         </ul>
+      </div>
+     <h3>Your Order Details:</h3>
+     <div class="my-4" >
+        <ul class="list-group" id="citems">  
+           
+        </ul>
+     </div>
+    </div>
+ </div>
+{% endblock %}ss
+{% block js %}
+  <script>
+    $('#trackerForm').submit(function(event){
+        $('#items').empty();
+        var sum=0;
+        var formdata={
+            'orderid' : $('input[name=orderid]').val(),  // input tag whose id is orderid
+            'email' : $('input[name=email]').val(),
+            'csrfmiddlewaretoken' : $('input[name= csrfmiddlewaretoken]').val()
+        };
+
+        // to process the above form data we use ajax request
+        $.ajax({
+         type: 'POST',
+         url: '/shop/tracker/',
+         data: formdata,
+         encode: true
+        })
+
+        .done(function(data){
+           //console.log(data) // views tracker function is returning an json text
+           data=JSON.parse(data);
+           console.log(data);
+           updates= data[0];
+           //console.log(updates);
+            if ( updates != undefined){
+              for(i= 0; i < updates.length; i++){
+                let text = updates[i]['text'];
+                let time = updates[i]['time'];
+                mystr = ` <li class="list-group-item d-flex justify-content-between align-items-center">
+                  ${text}
+                  <span class="badge badge-primary badge-pill">${time}</span>
+                </li>`
+                $('#items').append(mystr);
+              }
+            } 
+            else {
+                mystr = ` <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Sorry we could not fetch order with this orderid and email id </li>`
+                $('#items').append(mystr);
+            }
+    // Fill in the Order details
+    
+      if(data[1] != undefined){
+        cart= JSON.parse(data[1]);
+        //console.log(cart);
+        $('#citems').empty();
+        for(item in cart){
+          let name = cart[item][1];
+          let qty = cart[item][0];
+          sum = sum + qty;
+          mystr = ` <li class="list-group-item d-flex justify-content-between align-items-center">
+            ${name}
+            <span class="badge badge-primary badge-pill">${qty}</span>
+          </li>`
+          $('#citems').append(mystr);
+        }}
+        else{
+          $('#citems').empty();
+        }
+        document.getElementById('cart').innerHTML=sum;    
+      });
+        
+        event.preventDefault(); // prevent the default behaviour of form i.e page is reload again
+    });
+
+  </script>
+
+{% endblock %}

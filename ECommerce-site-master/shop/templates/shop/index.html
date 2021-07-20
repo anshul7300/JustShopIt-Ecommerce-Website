@@ -1,0 +1,220 @@
+{% extends 'shop/basic.html' %}
+{% block title %} JustShopIt.com {% endblock %}
+{% load static %}
+{% block css %}
+  
+          .col-md-3
+          {
+          display: inline-block;
+          margin-left:-4px;
+          }
+
+          .carousel-indicators .active {
+          background-color: blue;
+            }
+
+          .col-md-3 img{
+          max-width: 260px;
+          height: 200px;
+          border-style: outset;
+          }
+
+          body .carousel-indicator li{
+          background-color: blue;
+          }
+          .carousel-indicators li{
+            background-color: #7270fc;
+          }
+
+          body .carousel-indicators{
+          bottom: -30px;
+          }
+         
+          body .carousel-control-prev-icon,
+          body .carousel-control-next-icon{
+          background-color: blue;
+          }
+
+          .carousel-control-prev,
+          .carousel-control-next{
+          top: auto;
+          bottom: auto;
+          padding-top: 220px;
+          }
+           body .no-padding{
+           padding-left: 0,
+           padding-right: 0;
+           }
+ {% endblock %}
+
+{% block body %}
+<!--div class="view" style="background-image:url('../static/shop/background3.jpg'); background-repeat:repeat;background-attachment:scroll; background-size:36cm;"-->
+ <div class="container">
+
+    <!--Slideshow starts here -->
+  {% for product, range, nSlides in allProds %}
+    <br>
+    <h5 class="my-4" style="color:black;font-weight:bolder;">{{product.0.category}}</h5> <!--any product either 0,1,2.....n in product -->
+    <div class="row">
+    <div id="demo{{forloop.counter}}" class="col carousel slide my-3" data-ride="carousel">
+    <ul class="carousel-indicators">
+      <li data-target="#demo{{forloop.counter}}" data-slide-to="0" class="active"></li>
+
+      {% for i in range %}
+        <li data-target="#demo{{forloop.parentloop.counter}}" data-slide-to="{{i}}" ></li>
+      {% endfor %}
+    </ul>
+    <div class="container carousel-inner no-padding">
+
+      <div class="carousel-item active">
+
+        {% for i in product %}
+        <div class="col-xs-3 col-sm-3 col-md-3">
+          <div class="card align-items-center" style="width: 17rem; animation:cubic-bezier(0.95, 0.05, 0.795, 0.035);">
+            <img src='/media/{{i.image}}' class="card-img-top" alt="...">
+            <div class="card-body">
+              <h5 class="card-title" id="namepr{{i.id}}" style="animation: cubic-bezier(0.95, 0.05, 0.795, 0.035);">{{i.product_name}}</h5>
+              <p class="card-text " data-html="true">{{i.Disc}}</p>
+              <p class="card-text"   style="animation: cubic-bezier(0.95, 0.05, 0.795, 0.035);">Price-<span id="pricepr{{i.id}}">{{i.price}}</span> Rs</p>
+              <span id="divpr{{i.id}}" class="divpr">
+              <button id="pr{{i.id}}"  class="btn btn-primary cart">Add To Cart</button> <!-- class of button is cart-->
+               <!--Class cart we target it as cart-->
+              </span>
+              <a href="/shop/products/{{i.id}}"> <button id="qv{{i.id}}"  class="btn btn-primary cart">Quick View</button></a>  
+            </div>
+          </div>
+        </div>
+        {% if forloop.counter|divisibleby:4 and forloop.counter > 0 and not forloop.last %}
+          </div><div class="carousel-item">
+        {% endif %}
+
+        {% endfor %}
+    </div>
+
+</div>
+</div>
+    <!-- left and right controls for the slide -->
+    <a class="carousel-control-prev" href="#demo{{forloop.counter}}" data-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </a>
+    <a class="carousel-control-next" href="#demo{{forloop.counter}}" data-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </a>
+    </div>
+    {% endfor %}
+ </div>
+ {% endblock %}
+
+ {% block js %}
+  <script>
+     
+      //Find Items from Storage
+      //localStorage.clear();
+      if(localStorage.getItem('cart')== null)
+      {
+         var cart={};
+      }
+      else
+      {
+        cart=JSON.parse(localStorage.getItem('cart'));
+        console.log(cart);
+        updateCart(cart);
+      }
+
+      // Add to Cart Button JavaScript
+      $('.cart').click(function(){
+        var idstr = this.id.toString();
+        if (cart[idstr] !=undefined ){
+          qty= cart[idstr][0]+1;
+          cart[idstr]= [qty,name];
+        }
+        else{
+          qty = 1;
+          name=document.getElementById('name'+ idstr).innerHTML;
+          price=document.getElementById('price'+ idstr).innerHTML;
+          cart[idstr]= [qty,name,parseInt(price)];
+        }
+        
+        updateCart(cart);
+        localStorage.setItem('cart',JSON.stringify(cart));
+       // document.getElementById('cart').innerHTML = Object.keys(cart).length;
+      });
+
+      // Popup Cart when we move cursor to cart
+      $('#popcart').popover();
+      //document.getElementById("popcart").setAttribute('data-content','<h5>Here are your Cart Items</h5>');
+      //updatePopover(cart);
+
+    // Popover Cart element
+    function updatePopover(cart)
+   {
+    console.log('We are inside updatePopover');
+    
+    var popStr = "";
+    popStr = popStr + "<h5> Here are your Cart Items  </h5><div class='mx-2 my-2'>";
+    var i = 1;
+    for (var item in cart){
+      if(cart[item][0] == 0){
+        continue;
+      }
+        popStr = popStr + "<b>" + i + "</b>. ";
+        popStr = popStr + document.getElementById('name' + item).innerHTML.slice(0, 19) + "... Qty: " + cart[item][0] + '<br>';
+        i = i+1;
+    }
+    popStr = popStr + "</div> <a href='/shop/checkout'><button class='btn btn-primary' id ='checkout'>Checkout</button></a> <button class='btn btn-primary' onclick='clearCart()' id ='clearCart'>Clear Cart</button>" 
+    //console.log(popStr);
+    document.getElementById('popcart').setAttribute('data-content', popStr);
+    $('#popcart').popover('show');
+}
+
+
+ function clearCart() {
+  cart = JSON.parse(localStorage.getItem('cart'));// parse is used to convert JSON string in python object, here cart is the keyname stored in localstorage
+  for (var item in cart) {
+      document.getElementById('div' + item).innerHTML = "<button id='" + item + "' class='btn btn-primary cart'>Add To Cart</button>";
+  }
+  localStorage.clear();
+  cart = {};
+  updateCart(cart);
+}
+
+
+  function updateCart(cart) {
+    var sum = 0;
+    for (var item in cart) {
+        sum = sum + cart[item][0];
+        document.getElementById('div' + item).innerHTML = "<button id='minus" + item + "' class='btn btn-primary minus'>-</button> <span id='val" + item + "'>" + cart[item][0] + "</span> <button id='plus" + item + "' class='btn btn-primary plus'> + </button>";
+
+      }
+    //localStorage.setItem('cart', JSON.stringify(cart));//stringify is used to send python data in string format to web server
+    document.getElementById('cart').innerHTML = sum;
+    //console.log(cart); 
+    updatePopover(cart);
+}
+      
+    // If plus or minus button is clicked, change the cart as well as the display value
+    $('.divpr').on("click", "button.minus", function() {    //here button.minus is the class of button
+        a = this.id.slice(7, );//minuspr12
+        //console.log(cart['pr' + a]);
+
+        cart['pr' + a][0] = cart['pr' + a][0] - 1;
+        cart['pr' + a][0] = Math.max(0, cart['pr' + a][0]);  // stop cart value to go in negative range
+        document.getElementById('valpr' + a).innerHTML = cart['pr' + a][0];
+        if (cart['pr' + a][0] == 0){
+          document.getElementById('divpr' + a).innerHTML= "<button id='pr"+a+"' class='btn btn-primary cart'>Add to Cart</button>"
+          delete cart['pr'+ a];
+        }
+        else{
+        document.getElementById('valpr' + a).innerHTML = cart['pr' + a][0];
+        
+        }
+        updateCart(cart);
+    });
+    $('.divpr').on("click", "button.plus", function() {
+        a = this.id.slice(6, );
+        cart['pr' + a][0] = cart['pr' + a][0] + 1;
+        document.getElementById('valpr' + a).innerHTML = cart['pr' + a][0];
+        updateCart(cart);
+    });
+    </script>
+ {%endblock%}
